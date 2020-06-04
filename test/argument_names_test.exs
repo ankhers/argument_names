@@ -59,4 +59,8 @@ defmodule ArgumentNamesTest do
     assert named(String.length("1"), 2, 3) == [1, 2, 3]
     assert named(b ~> (1 + 1), 1, 3) == [1, 2, 3]
   end
+
+  test "private functions" do
+    assert private(1,2,3) == [1,2,3]
+  end
 end

@@ -4,7 +4,7 @@ defmodule ArgumentNames do
   """
 
   @doc """
-  Defines a function with named arguments
+  Defines a public function with named arguments
 
   ## Examples
 
@@ -35,41 +35,72 @@ defmodule ArgumentNames do
       end
 
       defmacro unquote(call) do
-        outer_args = unquote(outer_args)
-        args = unquote(args)
-
-        split_args =
-          args
-          |> Enum.group_by(fn
-            {:~>, _, _} -> true
-            _ -> false
-          end)
-
-        arg_arr = :array.from_list(args)
-
-        arr =
-          List.foldl(split_args[true] || [], :array.new(length(args)), fn
-            {:~>, _, [{var_name, _, _}, val]}, acc ->
-              idx =
-                Enum.find_index(outer_args, fn {outer_name, _, _} ->
-                  var_name == outer_name
-                end)
-
-              :array.set(idx, val, acc)
-          end)
-
-        arr =
-          List.foldl(split_args[false] || [], arr, fn
-            val, acc ->
-              set_array(0, acc, val)
-          end)
-
-        {{:., [], [
-             {:__aliases__, [alias: false], [__MODULE__]},
-             :"call_#{unquote(name)}"
-           ]}, [], :array.to_list(arr)}
+        ArgumentNames.do_call_function(unquote(outer_args), unquote(args), unquote(name), __MODULE__)
       end
     end
+  end
+
+  @doc """
+  Defines a private function with named arguments
+
+  ## Examples
+
+  defmodule Foo do
+    require ArgumentNames
+    import ArgumentNames
+    
+    defnamedp div(first, second) do
+      first / second
+    end
+  end
+  """
+  defmacro defnamedp({name, meta, args} = call, do: expr) do
+    name_and_args = {:"call_#{name}", meta, args}
+
+    outer_args = Macro.escape(args)
+
+    quote do
+      @doc false
+      defp unquote(name_and_args) do
+        unquote(expr)
+      end
+
+      defmacrop unquote(call) do
+        ArgumentNames.do_call_function(unquote(outer_args), unquote(args), unquote(name), __MODULE__)
+      end
+    end
+  end
+
+  @doc false
+  def do_call_function(outer_args, args, name, mod) do
+    split_args =
+      args
+      |> Enum.group_by(fn
+      {:~>, _, _} -> true
+      _ -> false
+    end)
+
+      arr =
+        List.foldl(split_args[true] || [], :array.new(length(args)), fn
+          {:~>, _, [{var_name, _, _}, val]}, acc ->
+            idx =
+            Enum.find_index(outer_args, fn {outer_name, _, _} ->
+              var_name == outer_name
+            end)
+
+          :array.set(idx, val, acc)
+        end)
+
+      arr =
+        List.foldl(split_args[false] || [], arr, fn
+          val, acc ->
+            set_array(0, acc, val)
+        end)
+
+      {{:., [], [
+           {:__aliases__, [alias: false], [mod]},
+           :"call_#{name}"
+         ]}, [], :array.to_list(arr)}
   end
 
   @doc false
