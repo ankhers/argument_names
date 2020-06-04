@@ -66,13 +66,13 @@ defmodule ArgumentNames do
       end
 
       defmacrop unquote(call) do
-        ArgumentNames.do_call_function(unquote(outer_args), unquote(args), unquote(name), __MODULE__)
+        ArgumentNames.do_call_function(unquote(outer_args), unquote(args), unquote(name))
       end
     end
   end
 
   @doc false
-  def do_call_function(outer_args, args, name, mod) do
+  def do_call_function(outer_args, args, name, mod \\ nil) do
     split_args =
       args
       |> Enum.group_by(fn
@@ -97,10 +97,15 @@ defmodule ArgumentNames do
             set_array(0, acc, val)
         end)
 
-      {{:., [], [
-           {:__aliases__, [alias: false], [mod]},
-           :"call_#{name}"
-         ]}, [], :array.to_list(arr)}
+      case mod do
+        nil ->
+          {:"call_#{name}", [], :array.to_list(arr)}
+        _ ->
+          {{:., [], [
+               {:__aliases__, [alias: false], [mod]},
+               :"call_#{name}"
+             ]}, [], :array.to_list(arr)}
+      end
   end
 
   @doc false
