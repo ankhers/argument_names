@@ -41,7 +41,6 @@ We can also use this function with pipes without having to name the arguments
 
 These are just a couple things I would like to see added to this package in no particular order
 
-* Support for making named private functions
 * Default arguments
 
 ## Installation
