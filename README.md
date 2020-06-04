@@ -52,7 +52,7 @@ by adding `argument_names` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:argument_names, "~> 0.1.0"}
+    {:argument_names, "~> 0.2.0"}
   ]
 end
 ```
